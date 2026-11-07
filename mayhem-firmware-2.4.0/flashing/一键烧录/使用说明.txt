@@ -1,0 +1,131 @@
+PortaPack H2 / HackRF 固件合集 + 一键烧录
+整理日期：2026-11-07（含全部已搜集固件）
+==========================================================
+
+一、怎么用（三步）
+
+  1. 双击  一键烧录.bat
+  2. 输入序号（例如 1 = 卖家 mod2）
+  3. 确认设备已进 HackRF 模式后，输入 Y 开始烧录
+
+  设备进 HackRF 模式的方法：
+    开机 -> 主菜单里选 "HackRF" -> 屏幕变黑或只显示一行字，属正常，
+    这时电脑才能识别到设备（VID_1D50）。
+
+
+二、固件清单（H2 可直接烧）
+
+  序号  文件                                    界面版本        日期        说明
+  ----  --------------------------------------  --------------  ----------  ----------------------------
+  1     firmware\1_mod2_seller.bin              local-be45cf6   2020-03-09  卖家原版最新，推荐
+  2     firmware\2_mod_seller.bin               local-de927bd   2020-03-04  卖家原版，公司原型机同款
+  3     firmware\3_havoc_seller.bin             local-127a798   2020-03-04  卖家原版另一分支
+  4     firmware\4_spk_2019.bin                 （无版本串）    2019-05     卖家旧版，菜单命名不同
+  5     firmware\5_havoc_master_20200420.bin    local-9e5eebae  2020-04-20  Havoc 官方 master
+  6     firmware\6_havoc_20180612.bin           （无版本串）    2018-06-12  Havoc 早期版本
+  7     firmware\7_mayhem_v1.0.0.bin            local-f1ca56b   2020-05-12  Mayhem v1.0.0
+  8     firmware\8_mayhem_v2.4.0.bin            v2.4.0          2026        Mayhem 官方最新稳定版
+  9     firmware\9_sharebrained_1.5.1_20190405.bin  ShareBrained 1.5.1  2019-04-05  原厂固件（无 Havoc 菜单）
+
+  1~4 号即卖家所谓 "PortaPack H2 固件"，界面为绿图标 + PortaPack|Havoc 标题栏，
+  主菜单含 Play dead / Calls / Scanner，Receivers 含 ADS-B / ACARS / AIS Boats /
+  AFSK / Audio / ERT Meter / POCSAG / Radiosnde / TPMS Cars / APRS / DMR / SIGFOX /
+  LoRa / SSTV / TETRA。
+
+  1 号与 2 号的实际差别：UI 文字、菜单、功能完全一致，只有代码段重新编译过
+  （1 号小 2720 字节）。实用上分不出差异，优先用 1 号。
+
+
+三、救砖文件（DFU 模式用，不能直接当 PortaPack 固件烧）
+
+  firmware\hackrf_usb_recovery.dfu           Mayhem 2.4.0 配套，脚本 [D] 默认使用
+  firmware\recovery\hackrf_usb_v2.4.0.dfu    同上（备份）
+  firmware\recovery\hackrf_usb_2019.dfu      2019 老版本
+  firmware\recovery\hackrf_one_2018.dfu      2018 老版本
+  firmware\recovery\hackrf_one_2018.bin      对应 bin（hackrf_one_usb.bin）
+
+
+四、其他板型固件（H2 不要烧，仅供 H4M / PortaRF / HPro 使用）
+
+  firmware\other_boards\firmware_portarf.bin    PortaRF 专用，2MB
+  firmware\other_boards\firmware_hpro.bin       PRALINE/HPro，4MB（含 FPGA bitstream）
+  firmware\other_boards\hackrf_hpro_usb.dfu     HPro 主控 DFU
+
+  注：8_mayhem_v2.4.0.bin（firmware_hackrf.bin）本身对 H1/H2/H4M 通用，
+      运行时自动检测板型。
+
+
+五、三个必须知道的坑
+
+  1. 烧录会先整片擦除再写入
+     hackrf_spiflash -w 的动作是 Erase -> Write。中途 USB 断开，
+     原固件就永久没了，找不回来。
+     => 设备上有不想丢的固件，先按主菜单 [B] 备份（只读，不改设备）。
+
+  2. hackrf_info 显示的版本号 ≠ 界面版本号
+     每个固件内部有两条版本串：界面版本 + HackRF 基座版本。
+     例如烧 1 号 mod2，hackrf_info 会显示 local-de927bd，
+     而界面版本其实是 be45cf6 —— 这是正常的，不是烧错了。
+     判断烧的是哪个文件，靠界面版本串（0x058E00 附近）。
+
+  3. 烧完黑屏
+     H2 有不同型号的 LCD 驱动。断电后按住 5 个按键中的任意一个再上电，
+     逐个按键试，屏幕就会亮。
+
+
+六、USB 链路不稳怎么办
+
+  本机曾多次出现 Pipe error (-1000)（大块传输时 USB 断开），特征是：
+  hackrf_info 能正常识别，但 spiflash -r 一读就断。
+
+  处理顺序：
+    1. 换 USB 数据线（很多线只能充电）
+    2. 直插主机后置 USB 口，别经过 hub / 前置面板 / 扩展坞
+    3. 换一台电脑交叉验证
+
+  临时验证手段（不受大块传输影响）：
+    bin\hackrf_spiflash.exe -a 0x058E00 -l 0x200 -r check.bin
+    读 512 字节小区域，可与固件文件对应偏移逐字节比对。
+
+
+七、目录结构
+
+  一键烧录\
+    ├─ 一键烧录.bat                          主脚本
+    ├─ 使用说明.txt                          本文件
+    ├─ firmware\
+    │    1_mod2_seller.bin                   local-be45cf6  推荐
+    │    2_mod_seller.bin                    local-de927bd
+    │    3_havoc_seller.bin                  local-127a798
+    │    4_spk_2019.bin                      2019-05
+    │    5_havoc_master_20200420.bin         local-9e5eebae
+    │    6_havoc_20180612.bin                2018-06-12
+    │    7_mayhem_v1.0.0.bin                 local-f1ca56b
+    │    8_mayhem_v2.4.0.bin                 v2.4.0
+    │    9_sharebrained_1.5.1_20190405.bin   原厂 1.5.1
+    │    hackrf_usb_recovery.dfu             DFU 救砖（脚本 [D] 用）
+    │    recovery\                           各版本 DFU 救砖文件
+    │    other_boards\                       H4M / PortaRF / HPro 固件
+    └─ bin\
+         hackrf_spiflash.exe                 读写 Flash
+         hackrf_info.exe                     查看设备信息
+         dfu-util-static.exe                 DFU 模式工具
+
+  整个文件夹可直接拷给别人用，不依赖外部工具。
+
+
+八、手动命令（不想用脚本时）
+
+  在工作目录 一键烧录 下执行：
+
+    查设备:      bin\hackrf_info.exe
+    烧固件:      bin\hackrf_spiflash.exe -R -w firmware\1_mod2_seller.bin
+    读备份:      bin\hackrf_spiflash.exe -r backup_flash.bin
+    读小块:      bin\hackrf_spiflash.exe -a 0x058E00 -l 0x200 -r check.bin
+    救砖:        bin\dfu-util-static.exe -d 1fc9:000c -D firmware\hackrf_usb_recovery.dfu
+
+  参数说明：
+    -R  操作完成后复位设备
+    -w  写入（会先擦除整片）
+    -r  读出整片
+    -a  起始地址    -l  读取长度（配合 -r 做小块读）
